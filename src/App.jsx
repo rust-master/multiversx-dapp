@@ -39,7 +39,7 @@ function App() {
 
   async function signMessageMx() {
     try {
-      const message = 'Signing the Cryptool';
+      const message = 'SigningtheCryptool';
 
       if (messageSession) {
         onAbort();
@@ -48,10 +48,12 @@ function App() {
         return;
       }
 
-      signMessage({
+      const sig = await signMessage({
         message,
         callbackUrl,
       });
+
+      console.log("sig", sig.signature)
     } catch (error) {
       throw Error(error);
     }
