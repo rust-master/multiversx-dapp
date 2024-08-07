@@ -6,6 +6,8 @@ import { logout } from '@multiversx/sdk-dapp/utils/logout';
 import { useSignMessage } from '@multiversx/sdk-dapp/hooks/signMessage/useSignMessage';
 import { useGetSignMessageSession } from '@multiversx/sdk-dapp/hooks/signMessage/useGetSignMessageSession';
 import { getAddress } from "@multiversx/sdk-dapp/utils/account";
+import { useLedgerLogin } from '@multiversx/sdk-dapp/hooks/login/useLedgerLogin';
+import { HWProvider } from '@multiversx/sdk-hw-provider';
 
 function App() {
 
@@ -86,9 +88,67 @@ function App() {
     fetchAddress();
   }, []);
 
+   // Legder Account Provider
+   const [accountProvider, setAccountProvider] = useState(null);
+   const callbackRoute = '/'
+   const nativeAuth = true
+
+   // Ledger States useLedgerLogin
+   const [
+    onStartLogin,
+    ledgerErrorLoadingState,
+    {
+      accounts,
+      onConfirmSelectedAddress,
+      onGoToNextPage,
+      onGoToPrevPage,
+      onSelectAddress,
+      selectedAddress,
+      showAddressList,
+      startIndex
+    }
+  ] = useLedgerLogin({ callbackRoute, nativeAuth });
+
+   // Ledger init initHWProvider 
+   const initHWProvider = async () => {
+    try {
+      const hwWalletP = new HWProvider();
+      console.log("🚀 ~ initHWProvider ~ hwWalletP:", hwWalletP);
+      const initialized = await hwWalletP.init();
+      console.log("🚀 ~ initHWProvider ~ initialized:", initialized);
+
+      if (initialized) {
+        setAccountProvider(hwWalletP);
+      }
+
+    } catch (error) {
+      console.log("🚀 ~ initHWProvider ~ e:", error);
+    }
+  };
+
+  // Ledger Login
+  const onClickLedgerLogin = async () => {
+    try {
+      await initHWProvider();
+
+      if (accountProvider) {
+        const address = await accountProvider.login();
+        console.log("🚀 ~ onClickLedgerLogin ~ address:", address);
+      } else {
+        console.log("🚀 ~ onClickLedgerLogin ~ accountProvider is not initialized.");
+      }
+      
+    } catch (error) {
+      console.log("🚀 ~ onClickLedgerLogin ~ error:", error);
+    }
+  };
+
   return (
     <DappProvider environment="mainnet">
       <div className="app-container">
+      <button className="btn" onClick={onClickLedgerLogin}>
+          Login Ledger
+        </button>
         <button className="btn" onClick={loginMx}>
           Login
         </button>
