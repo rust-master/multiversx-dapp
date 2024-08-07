@@ -9,6 +9,8 @@ import { getAddress } from "@multiversx/sdk-dapp/utils/account";
 import { useLedgerLogin } from '@multiversx/sdk-dapp/hooks/login/useLedgerLogin';
 import { useWalletConnectV2Login } from '@multiversx/sdk-dapp/hooks/login/useWalletConnectV2Login'
 import QRCode from 'qrcode'
+import { useWebWalletLogin } from '@multiversx/sdk-dapp/hooks/login/useWebWalletLogin';
+
 
 function App() {
 
@@ -178,6 +180,13 @@ function App() {
     initLoginWithWalletConnectV2()
   }, [])
 
+
+  // Web Wallet Login
+  const [onInitiateWebLogin] = useWebWalletLogin({
+    callbackRoute: '/',
+    nativeAuth: nativeAuth
+  });
+
   return (
     <DappProvider environment="mainnet"
             customNetworkConfig={{
@@ -187,12 +196,16 @@ function App() {
             }}
           >
       <div className="app-container">
+
+      <button className="btn" onClick={onInitiateWebLogin}>
+          Login Web Wallet
+        </button>
   
       <button className="btn" onClick={onClickLedgerLogin}>
           Login Ledger
         </button>
         <button className="btn" onClick={loginMx}>
-          Login
+          Login DeFi Wallet
         </button>
         <button className="btn" onClick={signMessageMx} disabled={!connect} >
           Sign Message
