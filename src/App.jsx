@@ -7,7 +7,8 @@ import { useSignMessage } from '@multiversx/sdk-dapp/hooks/signMessage/useSignMe
 import { useGetSignMessageSession } from '@multiversx/sdk-dapp/hooks/signMessage/useGetSignMessageSession';
 import { getAddress } from "@multiversx/sdk-dapp/utils/account";
 import { useLedgerLogin } from '@multiversx/sdk-dapp/hooks/login/useLedgerLogin';
-import { HWProvider } from '@multiversx/sdk-hw-provider';
+import { useWalletConnectV2Login } from '@multiversx/sdk-dapp/hooks/login/useWalletConnectV2Login'
+import QRCode from 'qrcode'
 
 function App() {
 
@@ -89,7 +90,6 @@ function App() {
   }, []);
 
    // Legder Account Provider
-   const [accountProvider, setAccountProvider] = useState(null);
    const callbackRoute = '/'
    const nativeAuth = true
 
@@ -109,43 +109,85 @@ function App() {
     }
   ] = useLedgerLogin({ callbackRoute, nativeAuth });
 
-   // Ledger init initHWProvider 
-   const initHWProvider = async () => {
-    try {
-      const hwWalletP = new HWProvider();
-      console.log("🚀 ~ initHWProvider ~ hwWalletP:", hwWalletP);
-      const initialized = await hwWalletP.init();
-      console.log("🚀 ~ initHWProvider ~ initialized:", initialized);
-
-      if (initialized) {
-        setAccountProvider(hwWalletP);
-      }
-
-    } catch (error) {
-      console.log("🚀 ~ initHWProvider ~ e:", error);
-    }
-  };
-
   // Ledger Login
   const onClickLedgerLogin = async () => {
     try {
-      await initHWProvider();
-
-      if (accountProvider) {
-        const address = await accountProvider.login();
-        console.log("🚀 ~ onClickLedgerLogin ~ address:", address);
-      } else {
-        console.log("🚀 ~ onClickLedgerLogin ~ accountProvider is not initialized.");
-      }
-      
+      onStartLogin()
     } catch (error) {
       console.log("🚀 ~ onClickLedgerLogin ~ error:", error);
     }
   };
 
+   // xPortal States
+   const logoutRoute = `${window.location.origin}/profile`
+   const customRequestMethods = []
+   const [qrCodeSvg, setQrCodeSvg] = useState('')
+ 
+   // xPortal States useWalletConnectV2Login
+   const [
+     initLoginWithWalletConnectV2,
+     { error: walletConnectErrorV2, isLoading },
+     {
+       connectExisting,
+       removeExistingPairing,
+       uriDeepLink: walletConnectDeepLinkV2,
+       walletConnectUri: walletConnectUriV2,
+       wcPairings,
+     },
+   ] = useWalletConnectV2Login({
+     callbackRoute,
+     nativeAuth,
+     logoutRoute,
+     customRequestMethods,
+   })
+
+  // xPortal generateQRCode
+  const generateQRCode = async () => {
+    if (!walletConnectUriV2) {
+      return;
+    }
+    console.log('connectExisting', connectExisting)
+    console.log(':removeExistingPairing', removeExistingPairing)
+    console.log('walletConnectDeepLinkV2', walletConnectDeepLinkV2)
+    console.log('walletConnectUriV2', walletConnectUriV2)
+    console.log('wcPairings', wcPairings)
+    const mxAddress = await getAddress()
+    console.log("mxAddress:", mxAddress);
+
+    const svg = await QRCode.toString(walletConnectUriV2, {
+      type: 'svg',
+    })
+    console.log('generateQRCode ~ svg:', svg)
+
+
+    if (svg) {
+      setQrCodeSvg(svg)
+    }
+  }
+
+  const onClickLoginxPortal = async () => {
+    try {
+      generateQRCode()
+    } catch (error) {
+      console.log("🚀 ~ onClickLedgerLogin ~ error:", error);
+    }
+  }
+
+  // xPortal init walletconnect login
+  useEffect(() => {
+    initLoginWithWalletConnectV2()
+  }, [])
+
   return (
-    <DappProvider environment="mainnet">
+    <DappProvider environment="mainnet"
+            customNetworkConfig={{
+              name: 'customConfig',
+              walletConnectV2ProjectId: 'd9ab4f9c4fd16c4c376ff4c5c4fce213',
+              walletConnectV2RelayAddresses: ['wss://eu-central-1.relay.walletconnect.com']
+            }}
+          >
       <div className="app-container">
+  
       <button className="btn" onClick={onClickLedgerLogin}>
           Login Ledger
         </button>
@@ -158,6 +200,15 @@ function App() {
         <button className="btn" onClick={logoutMx}>
           Logout
         </button>
+
+        <button className="btn" onClick={onClickLoginxPortal}>
+          Login xPortal
+        </button>
+
+        <div style={{ textAlign: 'center', marginTop: '50px', width: '250px'}}>
+            <h1 className='xPortal'>Connect xPortal Wallet</h1>
+            <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
+        </div>
       </div>
     </DappProvider>
   );

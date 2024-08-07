@@ -5,6 +5,11 @@
   text-align: center;
 }
 
+.xPortal {
+  color: #000;
+  font-size: 20px;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
