@@ -9,7 +9,7 @@ import { getAddress } from "@multiversx/sdk-dapp/utils/account";
 import { useLedgerLogin } from '@multiversx/sdk-dapp/hooks/login/useLedgerLogin';
 import { useWalletConnectV2Login } from '@multiversx/sdk-dapp/hooks/login/useWalletConnectV2Login'
 import QRCode from 'qrcode'
-import { useWebWalletLogin } from '@multiversx/sdk-dapp/hooks/login/useWebWalletLogin';
+import { useCrossWindowLogin } from '@multiversx/sdk-dapp/hooks/login/useCrossWindowLogin';
 
 
 function App() {
@@ -182,11 +182,11 @@ function App() {
 
 
   // Web Wallet Login
-  const [onInitiateWebLogin] = useWebWalletLogin({
+  const [onInitiateWebLogin] = useCrossWindowLogin({
     callbackRoute: '/',
     nativeAuth: nativeAuth
   });
-
+  
   return (
     <DappProvider environment="mainnet"
             customNetworkConfig={{
