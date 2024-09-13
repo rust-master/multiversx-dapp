@@ -10,11 +10,27 @@ import { useLedgerLogin } from '@multiversx/sdk-dapp/hooks/login/useLedgerLogin'
 import { useWalletConnectV2Login } from '@multiversx/sdk-dapp/hooks/login/useWalletConnectV2Login'
 import QRCode from 'qrcode'
 import { useCrossWindowLogin } from '@multiversx/sdk-dapp/hooks/login/useCrossWindowLogin';
+import { ContractLoader } from './contract/ContractLoader'
+import FactoryABI from './contract/factory.abi.json'
+import {getTransactionPayload} from './contract/04.deployRaisePoolPayload'
+import { Address, Account } from '@multiversx/sdk-core'
+import { ApiNetworkProvider } from "@multiversx/sdk-network-providers";
+import { sendTransactions } from '@multiversx/sdk-dapp/services/transactions/sendTransactions';
+import { useGetAccount } from '@multiversx/sdk-dapp/hooks/account/useGetAccount'
+
+const apiNetworkProvider = new ApiNetworkProvider(
+  "https://devnet-api.multiversx.com",
+);
+
+const FACTORY_CONTRACT_ADDRESS = "erd1qqqqqqqqqqqqqpgq4px4kmh4zvhnejhfnducdv6kmya6d7kp7wpqcqq6j0";
+
 
 
 function App() {
 
   const [connect, setConnected] = useState(true)
+
+  const { address } = useGetAccount()
 
   const commonProps = {
     callbackRoute: '/',
@@ -32,7 +48,8 @@ function App() {
   };
 
   const [onInitiateLogin] = useExtensionLogin({
-    ...commonProps,
+    nativeAuth: true,
+    onLoginRedirect: () => {}
   });
 
   const { sessionId, signMessage, onAbort } = useSignMessage();
@@ -109,7 +126,8 @@ function App() {
       showAddressList,
       startIndex
     }
-  ] = useLedgerLogin({ callbackRoute, nativeAuth });
+  ] = useLedgerLogin({  nativeAuth: true,
+    onLoginRedirect: () => {}});
 
   // Ledger Login
   const onClickLedgerLogin = async () => {
@@ -137,9 +155,8 @@ function App() {
        wcPairings,
      },
    ] = useWalletConnectV2Login({
-     callbackRoute,
-     nativeAuth,
-     logoutRoute,
+    nativeAuth: true,
+    onLoginRedirect: () => {},
      customRequestMethods,
    })
 
@@ -183,12 +200,65 @@ function App() {
 
   // Web Wallet Login
   const [onInitiateWebLogin] = useCrossWindowLogin({
-    callbackRoute: '/',
-    nativeAuth: nativeAuth
+    nativeAuth: true,
+    onLoginRedirect: () => {}
   });
+
+
+
+ 
+
+  const loadContract = async () => {
+    const contractLoader = new ContractLoader(FactoryABI);
+    try {
+      const contract = await contractLoader.getContract(FACTORY_CONTRACT_ADDRESS);
+      console.log("contractLoader:", contractLoader);
+
+      return contract;
+    } catch (error) {
+      console.error("Failed to load contract:", error);
+    }
+  }
+
+  const getNonce = async () => {
+    const deployerAddressBech32 = 'erd1445qn0zgvmepmgs3dqc6h2y253r9ep6lf0hd2s0hhzxqrtun5l8sqg9stj'
+    const deployerAsAddress = Address.fromBech32(deployerAddressBech32);
+    const deployerAsAccount = new Account(deployerAsAddress);
+  
+    const deployerOnNetwork = await apiNetworkProvider.getAccount(deployerAsAddress);
+    deployerAsAccount.update(deployerOnNetwork);
+  
+    const nonce = deployerAsAccount.getNonceThenIncrement().valueOf()
+    return nonce;
+  }
+
+  const sendtransaction = async () => { 
+    const contract = await loadContract()
+    const nonce = await getNonce()
+
+    const deployerAddressBech32 = 'erd1445qn0zgvmepmgs3dqc6h2y253r9ep6lf0hd2s0hhzxqrtun5l8sqg9stj'
+
+    const transactionPayload = getTransactionPayload();
+
+    const transaction = contract.methods
+    .deployRaisePool(transactionPayload)
+    .withGasLimit(60000000)
+    .withChainID("D")
+    .withSender(new Address(deployerAddressBech32))
+    .buildTransaction();
+
+    const sessionId = await sendTransactions({
+      transactions: [transaction],
+      signWithoutSending: false,
+      hasConsentPopup: true
+    })
+
+    console.log("sessionId:", sessionId);
+
+  }
   
   return (
-    <DappProvider environment="mainnet"
+    <DappProvider environment="devnet"
             customNetworkConfig={{
               name: 'customConfig',
               walletConnectV2ProjectId: 'd9ab4f9c4fd16c4c376ff4c5c4fce213',
@@ -216,6 +286,10 @@ function App() {
 
         <button className="btn" onClick={onClickLoginxPortal}>
           Login xPortal
+        </button>
+
+        <button className="btn" onClick={sendtransaction}>
+          Deploy Raise Pool
         </button>
 
         <div style={{ textAlign: 'center', marginTop: '50px', width: '250px'}}>
