@@ -10,9 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@multiversx/sdk-core": "^13.2.2",
-    "@multiversx/sdk-dapp": "^2.34.2",
-    "@multiversx/sdk-network-providers": "^2.7.1",
+    "@multiversx/sdk-core": "13.2.1",
+    "@multiversx/sdk-dapp": "2.38.4",
+    "@multiversx/sdk-network-providers": "2.4.3",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

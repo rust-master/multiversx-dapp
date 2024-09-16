@@ -6,6 +6,5 @@ export default defineConfig({
   plugins: [react()],
   define: {
     global: "globalThis",
-    Buffer: Buffer,
   }
 })
