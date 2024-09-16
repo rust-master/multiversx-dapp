@@ -42,10 +42,10 @@ function App() {
   const { address } = useGetAccount()
 
   // const commonProps = {
-  //   callbackRoute: '/',
-  //   onLoginRedirect: () => {
-  //     window.location = '/';
-  //   },
+    // callbackRoute: '/',
+    // onLoginRedirect: () => {
+    //   window.location = '/';
+    // },
   // };
 
   const callbackUrl = `/`;
@@ -58,7 +58,10 @@ function App() {
 
   const [onInitiateLogin] = useExtensionLogin({
     nativeAuth: true,
-    onLoginRedirect: () => { }
+    callbackRoute: '/',
+    onLoginRedirect: () => {
+      window.location = '/';
+    },
   });
 
   const { sessionId, signMessage, onAbort } = useSignMessage();
@@ -166,7 +169,10 @@ function App() {
     },
   ] = useWalletConnectV2Login({
     nativeAuth: true,
-    onLoginRedirect: () => { },
+    callbackRoute: '/',
+    onLoginRedirect: () => {
+      window.location = '/';
+    },
     customRequestMethods,
   })
 
@@ -211,7 +217,10 @@ function App() {
   // Web Wallet Login
   const [onInitiateWebLogin] = useCrossWindowLogin({
     nativeAuth: true,
-    onLoginRedirect: () => { }
+    callbackRoute: '/',
+    onLoginRedirect: () => {
+      window.location = '/';
+    },
   });
 
 
